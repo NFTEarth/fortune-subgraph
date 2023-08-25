@@ -1,0 +1,98 @@
+query GetWhitelistedCurrencies {
+  currencies(first: 1000, where: { isAllowed: true }) {
+    address
+  }
+}
+
+query GetCurrentRound {
+  rounds(orderBy: roundId, orderDirection: desc, first: 1) {
+    id
+    roundId
+    status
+    cutoffTime
+    maximumNumberOfDeposits
+    maximumNumberOfParticipants
+    valuePerEntry
+    numberOfEntries
+    numberOfParticipants
+    winner
+    protocolFeeBp
+    deposits(orderBy: indice, orderDirection: asc, first: 1000) {
+      id
+      depositor
+      tokenAddress
+      tokenAmount
+      tokenId
+      tokenType
+      numberOfEntries
+      indice
+      claimed
+      entry {
+        totalNumberOfEntries
+      }
+    }
+  }
+}
+
+query GetRound($id: ID!) {
+  round(id: $id) {
+    id
+    roundId
+    status
+    cutoffTime
+    maximumNumberOfDeposits
+    maximumNumberOfParticipants
+    valuePerEntry
+    numberOfEntries
+    numberOfParticipants
+    winner
+    protocolFeeBp
+    deposits(orderBy: indice, orderDirection: asc, first: 1000) {
+      id
+      depositor
+      tokenAddress
+      tokenAmount
+      tokenId
+      tokenType
+      numberOfEntries
+      indice
+      claimed
+      entry {
+        totalNumberOfEntries
+      }
+    }
+  }
+}
+
+//
+query GetHistoryRounds($first: Int!, $skip: Int!, $where: Round_filter) {
+  rounds(orderBy: roundId, orderDirection: desc, first: $first, skip: $skip, where: $where) {
+    id
+    roundId
+    status
+    cutoffTime
+    maximumNumberOfDeposits
+    maximumNumberOfParticipants
+    valuePerEntry
+    numberOfEntries
+    numberOfParticipants
+    winner
+    drawnHash
+    protocolFeeBp
+    deposits(orderBy: indice, orderDirection: asc, first: 1000) {
+      id
+      depositor
+      tokenAddress
+      tokenAmount
+      tokenId
+      tokenType
+      numberOfEntries
+      indice
+      claimed
+      entry {
+        totalNumberOfEntries
+      }
+    }
+  }
+}
+//

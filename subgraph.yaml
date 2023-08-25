@@ -1,0 +1,84 @@
+specVersion: 0.0.5
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum
+    name: Fortune
+    network: arbitrum-goerli
+    source:
+      address: "0xf80d04CCd8D3c76294b24aD1c2A38CCB847059c3"
+      abi: Fortune
+      startBlock: 36465183
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - Entry
+        - Deposit
+        - Round
+        - CurrenciesStatusUpdated
+        - Deposited
+        - DepositsWithdrawn
+        - ERC20OracleUpdated
+        - MaximumNumberOfDepositsPerRoundUpdated
+        - MaximumNumberOfParticipantsPerRoundUpdated
+        - Paused
+        - PrizesClaimed
+        - ProtocolFeeBpUpdated
+        - ProtocolFeeRecipientUpdated
+        - RandomnessRequested
+        - ReservoirOracleUpdated
+        - RoleAdminChanged
+        - RoleGranted
+        - RoleRevoked
+        - RoundDurationUpdated
+        - RoundStatusUpdated
+        - SignatureValidityPeriodUpdated
+        - Unpaused
+        - ValuePerEntryUpdated
+      abis:
+        - name: Fortune
+          file: ./abis/Fortune.json
+      eventHandlers:
+        - event: CurrenciesStatusUpdated(address[],bool)
+          handler: handleCurrenciesStatusUpdated
+        - event: Deposited(address,uint256,uint256)
+          handler: handleDeposited
+        - event: DepositsWithdrawn(uint256,address,uint256[])
+          handler: handleDepositsWithdrawn
+        - event: ERC20OracleUpdated(address)
+          handler: handleERC20OracleUpdated
+        - event: MaximumNumberOfDepositsPerRoundUpdated(uint40)
+          handler: handleMaximumNumberOfDepositsPerRoundUpdated
+        - event: MaximumNumberOfParticipantsPerRoundUpdated(uint40)
+          handler: handleMaximumNumberOfParticipantsPerRoundUpdated
+        - event: Paused(address)
+          handler: handlePaused
+        - event: PrizesClaimed(uint256,address,uint256[])
+          handler: handlePrizesClaimed
+        - event: ProtocolFeeBpUpdated(uint16)
+          handler: handleProtocolFeeBpUpdated
+        - event: ProtocolFeeRecipientUpdated(address)
+          handler: handleProtocolFeeRecipientUpdated
+        - event: RandomnessRequested(uint256,uint256)
+          handler: handleRandomnessRequested
+        - event: ReservoirOracleUpdated(address)
+          handler: handleReservoirOracleUpdated
+        - event: RoleAdminChanged(indexed bytes32,indexed bytes32,indexed bytes32)
+          handler: handleRoleAdminChanged
+        - event: RoleGranted(indexed bytes32,indexed address,indexed address)
+          handler: handleRoleGranted
+        - event: RoleRevoked(indexed bytes32,indexed address,indexed address)
+          handler: handleRoleRevoked
+        - event: RoundDurationUpdated(uint40)
+          handler: handleRoundDurationUpdated
+        - event: RoundStatusUpdated(uint256,uint8)
+          handler: handleRoundStatusUpdated
+        - event: SignatureValidityPeriodUpdated(uint40)
+          handler: handleSignatureValidityPeriodUpdated
+        - event: Unpaused(address)
+          handler: handleUnpaused
+        - event: ValuePerEntryUpdated(uint256)
+          handler: handleValuePerEntryUpdated
+      file: ./src/fortune.ts

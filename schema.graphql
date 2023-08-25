@@ -1,0 +1,224 @@
+enum TokenType {
+  ERC20
+  ERC721
+  ERC1155
+}
+
+type Entry @entity(immutable: true) {
+  id: ID!
+  roundId: BigInt! # uint256
+  depositor: Bytes! # address
+  totalNumberOfEntries: BigInt!
+}
+
+type Deposit @entity(immutable: true) {
+  id: ID!
+  round: Round!
+  roundId: BigInt! # uint256
+  entriesCount: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+  depositor: Bytes! # address
+  tokenAddress: Bytes! # address
+  tokenAmount: BigInt! # uint256
+  tokenId: BigInt! # uint256
+  tokenType: TokenType!
+  numberOfEntries: BigInt!
+  indice: BigInt!
+  claimed: Boolean!
+  entry: Entry!
+}
+
+type Round @entity(immutable: true) {
+  id: ID!
+  roundId: BigInt! # uint256roundId
+  status: Int! # uint8
+  cutoffTime: BigInt!
+  maximumNumberOfDeposits: BigInt!
+  maximumNumberOfParticipants: BigInt!
+  valuePerEntry: BigInt! #uint256
+  numberOfEntries: BigInt!
+  numberOfParticipants: BigInt!
+  winner: Bytes
+  drawnAt: BigInt
+  drawnHash: Bytes
+  protocolFeeBp: Int! # uint16
+  protocolFeeOwed: BigInt!
+  deposits: [Deposit!]! @derivedFrom(field: "round")
+}
+
+type Currency @entity(immutable: true) {
+  id: ID!
+  currencies: [Bytes!]! # address[]
+  isAllowed: Boolean! # bool
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type Deposited @entity(immutable: true) {
+  id: ID!
+  depositor: Bytes! # address
+  roundId: BigInt! # uint256
+  entriesCount: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type DepositsWithdrawn @entity(immutable: true) {
+  id: ID!
+  roundId: BigInt! # uint256
+  depositor: Bytes! # address
+  depositIndices: [BigInt!]! # uint256[]
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type ERC20OracleUpdated @entity(immutable: true) {
+  id: ID!
+  erc20Oracle: Bytes! # address
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type MaximumNumberOfDepositsPerRoundUpdated @entity(immutable: true) {
+  id: ID!
+  maximumNumberOfDepositsPerRound: BigInt! # uint40
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type MaximumNumberOfParticipantsPerRoundUpdated @entity(immutable: true) {
+  id: ID!
+  maximumNumberOfParticipantsPerRound: BigInt! # uint40
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type Paused @entity(immutable: true) {
+  id: ID!
+  account: Bytes! # address
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type PrizesClaimed @entity(immutable: true) {
+  id: ID!
+  roundId: BigInt! # uint256
+  winner: Bytes! # address
+  prizeIndices: [BigInt!]! # uint256[]
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type ProtocolFeeBpUpdated @entity(immutable: true) {
+  id: ID!
+  protocolFeeBp: Int! # uint16
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type ProtocolFeeRecipientUpdated @entity(immutable: true) {
+  id: ID!
+  protocolFeeRecipient: Bytes! # address
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type RandomnessRequested @entity(immutable: true) {
+  id: ID!
+  roundId: BigInt! # uint256
+  requestId: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type ReservoirOracleUpdated @entity(immutable: true) {
+  id: ID!
+  reservoirOracle: Bytes! # address
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type RoleAdminChanged @entity(immutable: true) {
+  id: ID!
+  role: Bytes! # bytes32
+  previousAdminRole: Bytes! # bytes32
+  newAdminRole: Bytes! # bytes32
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type RoleGranted @entity(immutable: true) {
+  id: ID!
+  role: Bytes! # bytes32
+  account: Bytes! # address
+  sender: Bytes! # address
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type RoleRevoked @entity(immutable: true) {
+  id: ID!
+  role: Bytes! # bytes32
+  account: Bytes! # address
+  sender: Bytes! # address
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type RoundDurationUpdated @entity(immutable: true) {
+  id: ID!
+  roundDuration: BigInt! # uint40
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type RoundStatusUpdated @entity(immutable: true) {
+  id: ID!
+  roundId: BigInt! # uint256
+  status: Int! # uint8
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type SignatureValidityPeriodUpdated @entity(immutable: true) {
+  id: ID!
+  signatureValidityPeriod: BigInt! # uint40
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type Unpaused @entity(immutable: true) {
+  id: ID!
+  account: Bytes! # address
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type ValuePerEntryUpdated @entity(immutable: true) {
+  id: ID!
+  valuePerEntry: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}

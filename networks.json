@@ -1,0 +1,8 @@
+{
+  "arbitrum-goerli": {
+    "Fortune": {
+      "address": "0xf80d04CCd8D3c76294b24aD1c2A38CCB847059c3",
+      "startBlock": 36465183
+    }
+  }
+}
