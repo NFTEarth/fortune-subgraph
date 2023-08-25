@@ -69,17 +69,21 @@ const initializeRound = (address: Address, roundId: BigInt) : Round => {
 export function handleCurrenciesStatusUpdated(
   event: CurrenciesStatusUpdatedEvent
 ): void {
-  let entity = new Currency(
-    event.transaction.hash.concatI32(event.logIndex.toI32()).toString()
-  )
-  entity.currencies = event.params.currencies.map<Bytes>((address: Address) => Bytes.fromHexString(`${address}`))
-  entity.isAllowed = event.params.isAllowed
+  for(let i = 0; i < event.params.currencies.length; i++) {
+    const address = event.params.currencies.at(i)
+    let currency = Currency.load(address.toString())
 
-  entity.blockNumber = event.block.number
-  entity.blockTimestamp = event.block.timestamp
-  entity.transactionHash = event.transaction.hash
+    if (!currency) {
+      currency = new Currency(
+        address.toString()
+      )
+    }
 
-  entity.save()
+    currency.address = address
+    currency.isAllowed = event.params.isAllowed
+
+    currency.save()
+  }
 }
 
 export function handleDeposited(event: DepositedEvent): void {
@@ -88,7 +92,7 @@ export function handleDeposited(event: DepositedEvent): void {
   let round = Round.load(event.params.roundId.toString())
   const roundData = fortune.rounds(event.params.roundId)
   const depositData = fortune.getDeposits(event.params.roundId)
-  const currentDepositData = depositData[depositData.length - 1]
+  const currentDepositData = depositData.at(depositData.length - 1)
   const key = `${event.params.roundId}:${currentDepositData.currentEntryIndex}`
 
   if (!round) {
@@ -112,10 +116,10 @@ export function handleDeposited(event: DepositedEvent): void {
   deposit.blockTimestamp = event.block.timestamp
   deposit.transactionHash = event.transaction.hash
 
-  deposit.tokenAddress = depositData[depositData.length - 1].tokenAddress
-  deposit.tokenAmount = depositData[depositData.length - 1].tokenAmount
-  deposit.tokenId = depositData[depositData.length - 1].tokenId
-  deposit.tokenType = depositData[depositData.length - 1].tokenType.toString()
+  deposit.tokenAddress = currentDepositData.tokenAddress
+  deposit.tokenAmount = currentDepositData.tokenAmount
+  deposit.tokenId = currentDepositData.tokenId
+  deposit.tokenType = currentDepositData.tokenType.toString()
   deposit.numberOfEntries = event.params.entriesCount
   deposit.indice = currentDepositData.currentEntryIndex
   deposit.claimed = false
@@ -152,7 +156,7 @@ export function handleDepositsWithdrawn(event: DepositsWithdrawnEvent): void {
   const roundData = fortune.rounds(event.params.roundId)
 
   for(let i = 0; i < event.params.depositIndices.length; i++) {
-    const indice = event.params.depositIndices[i]
+    const indice = event.params.depositIndices.at(i)
     let deposit = Deposit.load(`${event.params.roundId}:${indice}`)
 
     if (deposit) {

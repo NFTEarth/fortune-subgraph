@@ -4,14 +4,14 @@ enum TokenType {
   ERC1155
 }
 
-type Entry @entity(immutable: true) {
+type Entry @entity {
   id: ID!
   roundId: BigInt! # uint256
   depositor: Bytes! # address
   totalNumberOfEntries: BigInt!
 }
 
-type Deposit @entity(immutable: true) {
+type Deposit @entity {
   id: ID!
   round: Round!
   roundId: BigInt! # uint256
@@ -30,7 +30,7 @@ type Deposit @entity(immutable: true) {
   entry: Entry!
 }
 
-type Round @entity(immutable: true) {
+type Round @entity {
   id: ID!
   roundId: BigInt! # uint256roundId
   status: Int! # uint8
@@ -48,13 +48,10 @@ type Round @entity(immutable: true) {
   deposits: [Deposit!]! @derivedFrom(field: "round")
 }
 
-type Currency @entity(immutable: true) {
+type Currency @entity {
   id: ID!
-  currencies: [Bytes!]! # address[]
+  address: Bytes! # address
   isAllowed: Boolean! # bool
-  blockNumber: BigInt!
-  blockTimestamp: BigInt!
-  transactionHash: Bytes!
 }
 
 type Deposited @entity(immutable: true) {
