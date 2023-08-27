@@ -1,7 +1,7 @@
 enum TokenType {
+  ETH
   ERC20
   ERC721
-  ERC1155
 }
 
 type Entry @entity {
