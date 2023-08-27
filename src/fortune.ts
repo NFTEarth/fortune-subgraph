@@ -19,7 +19,7 @@ import {
   RoundStatusUpdated as RoundStatusUpdatedEvent,
   SignatureValidityPeriodUpdated as SignatureValidityPeriodUpdatedEvent,
   Unpaused as UnpausedEvent,
-  ValuePerEntryUpdated as ValuePerEntryUpdatedEvent,
+  ValuePerEntryUpdated as ValuePerEntryUpdatedEvent, CancelCall,
 } from "../generated/Fortune/Fortune"
 import {
   Currency,
@@ -246,36 +246,21 @@ export function handlePaused(event: PausedEvent): void {
 }
 
 export function handlePrizesClaimed(event: PrizesClaimedEvent): void {
-  let entity = new PrizesClaimed(
-    `${event.params.roundId}:${event.params.winner}:${event.params.prizeIndices}`
-  )
-  entity.roundId = event.params.roundId
-  entity.winner = event.params.winner
-  entity.prizeIndices = event.params.prizeIndices
-
-  entity.blockNumber = event.block.number
-  entity.blockTimestamp = event.block.timestamp
-  entity.transactionHash = event.transaction.hash
-
-  entity.save()
-
   const fortune = Fortune.bind(event.address);
 
-  let round = Round.load(event.params.roundId.toString())
+  let round = initializeRound(event.address, event.params.roundId)
   const roundData = fortune.rounds(event.params.roundId)
-  const deposit = Deposit.load(`${event.params.roundId}:${event.params.prizeIndices}`)
+  const deposits = round.deposits.load()
 
-  if (deposit) {
-    deposit.claimed = true;
-    deposit.save();
-  }
+  //event.params.prizeIndices
+  //event.params.winner
 
-  if (!round) {
-    return;
+  for(let i = 0; i < deposits.length; i++) {
+    deposits[i].claimed = true;
+    deposits[i].save();
   }
 
   round.protocolFeeOwed = roundData.getProtocolFeeOwed()
-
   round.save();
 }
 
@@ -423,14 +408,6 @@ export function handleRoundStatusUpdated(event: RoundStatusUpdatedEvent): void {
 
   round.winner = roundData.getWinner()
   round.drawnAt = roundData.getDrawnAt()
-  const deposits = round.deposits.load();
-
-  if (event.params.status === 3) {
-    for(let i = 0; i < deposits.length; i++) {
-      deposits[i].depositor = roundData.getWinner()
-      deposits[i].save()
-    }
-  }
 
   round.status = event.params.status
   round.save();
