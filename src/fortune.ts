@@ -43,7 +43,7 @@ import {
   Entry,
   Deposit,
 } from "../generated/schema"
-import {Address, BigInt, Bytes} from "@graphprotocol/graph-ts/index";
+import {Address, BigInt} from "@graphprotocol/graph-ts/index";
 
 const initializeRound = (address: Address, roundId: BigInt) : Round => {
   let round = Round.load(roundId.toString())
@@ -123,8 +123,17 @@ export function handleDeposited(event: DepositedEvent): void {
   deposit.tokenAddress = currentDepositData.tokenAddress
   deposit.tokenAmount = currentDepositData.tokenAmount
   deposit.tokenId = currentDepositData.tokenId
-  deposit.tokenType = currentDepositData.tokenType === 0 ?
-    (currentDepositData.tokenAddress === Address.zero() ? 'ETH' : 'ERC20') : 'ERC721'
+  if (currentDepositData.tokenType === 0) {
+    deposit.tokenType = 'ETH'
+  }
+
+  if (currentDepositData.tokenType === 1) {
+    deposit.tokenType = 'ERC20'
+  }
+
+  if (currentDepositData.tokenType === 2) {
+    deposit.tokenType = 'ERC721'
+  }
   deposit.numberOfEntries = event.params.entriesCount
   deposit.indice = currentDepositData.currentEntryIndex
   deposit.claimed = false
@@ -408,10 +417,19 @@ export function handleRoundDurationUpdated(
 }
 
 export function handleRoundStatusUpdated(event: RoundStatusUpdatedEvent): void {
-  let round = Round.load(event.params.roundId.toString())
+  let round = initializeRound(event.address, event.params.roundId)
+  const fortune = Fortune.bind(event.address)
+  const roundData = fortune.rounds(event.params.roundId);
 
-  if (!round) {
-    round = initializeRound(event.address, event.params.roundId)
+  round.winner = roundData.getWinner()
+  round.drawnAt = roundData.getDrawnAt()
+  const deposits = round.deposits.load();
+
+  if (event.params.status === 3) {
+    for(let i = 0; i < deposits.length; i++) {
+      deposits[i].depositor = round.winner
+      deposits[i].save()
+    }
   }
 
   round.status = event.params.status
@@ -451,15 +469,8 @@ export function handleValuePerEntryUpdated(
 ): void {
   const fortune = Fortune.bind(event.address);
   const roundId = fortune.roundsCount()
+  const round = initializeRound(event.address, roundId)
 
-  let round = Round.load(roundId.toString())
-
-  if (!round) {
-    round = initializeRound(event.address, roundId)
-  }
-
-  if (round) {
-    round.valuePerEntry = event.params.valuePerEntry;
-    round.save();
-  }
+  round.valuePerEntry = event.params.valuePerEntry;
+  round.save();
 }
