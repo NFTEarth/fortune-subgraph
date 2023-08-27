@@ -427,7 +427,7 @@ export function handleRoundStatusUpdated(event: RoundStatusUpdatedEvent): void {
 
   if (event.params.status === 3) {
     for(let i = 0; i < deposits.length; i++) {
-      deposits[i].depositor = round.winner
+      deposits[i].depositor = roundData.getWinner()
       deposits[i].save()
     }
   }
