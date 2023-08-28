@@ -4,21 +4,18 @@ enum TokenType {
   ERC721
 }
 
-type Entry @entity {
+type Participant @entity {
   id: ID!
-  roundId: BigInt! # uint256
+  round: Round! # uint256
   depositor: Bytes! # address
   totalNumberOfEntries: BigInt!
+  deposits: [Deposit!]! @derivedFrom(field: "participant")
 }
 
 type Deposit @entity {
   id: ID!
   round: Round!
-  roundId: BigInt! # uint256
   entriesCount: BigInt! # uint256
-  blockNumber: BigInt!
-  blockTimestamp: BigInt!
-  transactionHash: Bytes!
   depositor: Bytes! # address
   tokenAddress: Bytes! # address
   tokenAmount: BigInt! # uint256
@@ -27,7 +24,22 @@ type Deposit @entity {
   numberOfEntries: BigInt!
   indice: BigInt!
   claimed: Boolean!
-  entry: Entry!
+  participant: Participant!
+  transaction: Transaction!
+  claimedHash: Bytes
+}
+
+type Transaction @entity(immutable: true) {
+  id: ID!
+  hash: Bytes!
+  round: Round!
+  depositor: Bytes!
+  deposits: [Deposit!]!
+  totalNumberOfEntries: BigInt!
+  gasLimit: BigInt!
+  gasPrice: BigInt!
+  block: BigInt!
+  timestamp: BigInt!
 }
 
 type Round @entity {
@@ -35,17 +47,35 @@ type Round @entity {
   roundId: BigInt! # uint256roundId
   status: Int! # uint8
   cutoffTime: BigInt!
+  lastStatusUpdate: BigInt
+  statusLog: [RoundStatusLog!]!
   maximumNumberOfDeposits: BigInt!
   maximumNumberOfParticipants: BigInt!
   valuePerEntry: BigInt! #uint256
   numberOfEntries: BigInt!
   numberOfParticipants: BigInt!
+  duration: BigInt!
   winner: Bytes
   drawnAt: BigInt
   drawnHash: Bytes
   protocolFeeBp: Int! # uint16
   protocolFeeOwed: BigInt!
   deposits: [Deposit!]! @derivedFrom(field: "round")
+  transactions: [Transaction!]!
+}
+
+type RoundStatusLog @entity(immutable: true) {
+  id: ID!
+  round: Round!
+  status: Int!
+  transaction: Bytes!
+  timestamp: BigInt!
+  block: BigInt!
+}
+
+type Fortune @entity {
+  id: ID!
+  totalRounds: BigInt!
 }
 
 type Currency @entity {

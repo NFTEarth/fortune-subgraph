@@ -19,7 +19,7 @@ import {
   RoundStatusUpdated as RoundStatusUpdatedEvent,
   SignatureValidityPeriodUpdated as SignatureValidityPeriodUpdatedEvent,
   Unpaused as UnpausedEvent,
-  ValuePerEntryUpdated as ValuePerEntryUpdatedEvent, CancelCall,
+  ValuePerEntryUpdated as ValuePerEntryUpdatedEvent,
 } from "../generated/Fortune/Fortune"
 import {
   Currency,
@@ -40,10 +40,10 @@ import {
   SignatureValidityPeriodUpdated,
   Unpaused,
   Round,
-  Entry,
-  Deposit,
+  Deposit, Transaction, Participant, RoundStatusLog,
 } from "../generated/schema"
 import {Address, BigInt} from "@graphprotocol/graph-ts/index";
+import {Bytes} from "@graphprotocol/graph-ts";
 
 const initializeRound = (address: Address, roundId: BigInt) : Round => {
   let round = Round.load(roundId.toString())
@@ -51,6 +51,7 @@ const initializeRound = (address: Address, roundId: BigInt) : Round => {
   if (!round) {
     const fortune = Fortune.bind(address)
     const roundData = fortune.rounds(roundId);
+    const duration = fortune.roundDuration();
 
     round = new Round(roundId.toString());
     round.roundId = roundId;
@@ -58,6 +59,7 @@ const initializeRound = (address: Address, roundId: BigInt) : Round => {
     round.maximumNumberOfDeposits = roundData.getMaximumNumberOfDeposits()
     round.maximumNumberOfParticipants = roundData.getMaximumNumberOfParticipants()
     round.valuePerEntry = roundData.getValuePerEntry()
+    round.duration = duration
     round.status = roundData.getStatus()
     round.numberOfEntries = BigInt.zero()
     round.numberOfParticipants = BigInt.zero()
@@ -71,6 +73,21 @@ const initializeRound = (address: Address, roundId: BigInt) : Round => {
 
   return round
 }
+
+
+const initializeParticipant = (roundId: BigInt, depositor: Bytes) : Participant => {
+  let participant = Participant.load(roundId.toString().concat(depositor.toString()))
+
+  if (!participant) {
+    participant = new Participant(roundId.toString().concat(depositor.toString()));
+    participant.depositor = depositor
+    participant.round = roundId.toString()
+    participant.totalNumberOfEntries = BigInt.zero()
+  }
+
+  return participant
+}
+
 
 export function handleCurrenciesStatusUpdated(
   event: CurrenciesStatusUpdatedEvent
@@ -100,26 +117,26 @@ export function handleDeposited(event: DepositedEvent): void {
   const depositData = fortune.getDeposits(event.params.roundId)
 
   const currentDepositData = depositData.at(depositData.length - 1)
-  const key = `${event.params.roundId}:${currentDepositData.currentEntryIndex}`
 
-  const entry = new Entry(key)
-  entry.roundId = event.params.roundId
-  entry.depositor = event.params.depositor
-  entry.totalNumberOfEntries = event.params.entriesCount
-  entry.save();
+  const participant = initializeParticipant(event.params.roundId, event.params.depositor)
+  participant.totalNumberOfEntries = participant.totalNumberOfEntries.plus(event.params.entriesCount)
 
   let deposit = new Deposit(
-    key
+    event.params.roundId.toString().concat((depositData.length - 1).toString())
   )
   deposit.depositor = event.params.depositor
-  deposit.roundId = event.params.roundId
   deposit.round = event.params.roundId.toString();
   deposit.entriesCount = event.params.entriesCount
 
-  deposit.blockNumber = event.block.number
-  deposit.blockTimestamp = event.block.timestamp
-  deposit.transactionHash = event.transaction.hash
+  let transaction = new Transaction(
+    event.transaction.hash.concatI32(event.logIndex.toI32()).toString()
+  )
+  transaction.block = event.block.number
+  transaction.timestamp = event.block.timestamp
+  transaction.hash = event.transaction.hash
+  transaction.save()
 
+  deposit.transaction = transaction.id
   deposit.tokenAddress = currentDepositData.tokenAddress
   deposit.tokenAmount = currentDepositData.tokenAmount
   deposit.tokenId = currentDepositData.tokenId
@@ -135,15 +152,16 @@ export function handleDeposited(event: DepositedEvent): void {
     deposit.tokenType = 'ERC721'
   }
   deposit.numberOfEntries = event.params.entriesCount
-  deposit.indice = currentDepositData.currentEntryIndex
+  deposit.indice = BigInt.fromI32(depositData.length - 1)
   deposit.claimed = false
-  deposit.entry = key
+  deposit.participant = participant.id
 
   round.numberOfEntries = round.numberOfEntries.plus(event.params.entriesCount)
   round.numberOfParticipants = roundData.getNumberOfParticipants()
 
   round.save();
   deposit.save()
+  participant.save();
 }
 
 function filterDeposit (depositIndices: BigInt[], index: number): boolean {
@@ -171,7 +189,7 @@ export function handleDepositsWithdrawn(event: DepositsWithdrawnEvent): void {
 
   for(let i = 0; i < event.params.depositIndices.length; i++) {
     const indice = event.params.depositIndices.at(i)
-    let deposit = Deposit.load(`${event.params.roundId}:${indice}`)
+    let deposit = Deposit.load(event.params.roundId.toString().concat((indice).toString()))
 
     if (deposit) {
       deposit.claimed = true;
@@ -317,7 +335,6 @@ export function handleRandomnessRequested(
   if (!round) {
     round = initializeRound(event.address, event.params.roundId)
   }
-  round.roundId = event.params.roundId;
   round.drawnHash = event.transaction.hash;
   round.winner = roundData.getWinner()
   round.drawnAt = roundData.getDrawnAt()
@@ -406,10 +423,18 @@ export function handleRoundStatusUpdated(event: RoundStatusUpdatedEvent): void {
   const fortune = Fortune.bind(event.address)
   const roundData = fortune.rounds(event.params.roundId);
 
+  let roundLog = new RoundStatusLog(event.transaction.hash.concatI32(event.logIndex.toI32()).toString())
+  roundLog.block = event.block.number
+  roundLog.timestamp = event.block.timestamp
+  roundLog.transaction = event.transaction.hash
+  roundLog.status = event.params.status
+  roundLog.round = round.id
+
   round.winner = roundData.getWinner()
   round.drawnAt = roundData.getDrawnAt()
-
   round.status = event.params.status
+
+  roundLog.save()
   round.save();
 }
 
