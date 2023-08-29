@@ -40,7 +40,10 @@ import {
   SignatureValidityPeriodUpdated,
   Unpaused,
   Round,
-  Deposit, Transaction, Participant, RoundStatusLog,
+  Deposit,
+  Transaction,
+  Participant,
+  RoundStatusLog,
 } from "../generated/schema"
 import {Address, BigInt} from "@graphprotocol/graph-ts/index";
 import {Bytes} from "@graphprotocol/graph-ts";
@@ -76,10 +79,11 @@ const initializeRound = (address: Address, roundId: BigInt) : Round => {
 
 
 const initializeParticipant = (roundId: BigInt, depositor: Bytes) : Participant => {
-  let participant = Participant.load(roundId.toString().concat(depositor.toString()))
+  let id = roundId.toString().concat(depositor.toHexString())
+  let participant = Participant.load(id)
 
   if (!participant) {
-    participant = new Participant(roundId.toString().concat(depositor.toString()));
+    participant = new Participant(id);
     participant.depositor = depositor
     participant.round = roundId.toString()
     participant.totalNumberOfEntries = BigInt.zero()
@@ -94,11 +98,11 @@ export function handleCurrenciesStatusUpdated(
 ): void {
   for(let i = 0; i < event.params.currencies.length; i++) {
     const address = event.params.currencies.at(i)
-    let currency = Currency.load(address.toString())
+    let currency = Currency.load(address.toHexString())
 
     if (!currency) {
       currency = new Currency(
-        address.toString()
+        address.toHexString()
       )
     }
 
@@ -131,6 +135,11 @@ export function handleDeposited(event: DepositedEvent): void {
   let transaction = new Transaction(
     event.transaction.hash.concatI32(event.logIndex.toI32()).toString()
   )
+  transaction.depositor = event.params.depositor
+  transaction.round = event.params.roundId.toString()
+  transaction.totalNumberOfEntries = participant.totalNumberOfEntries
+  transaction.gasLimit = event.transaction.gasLimit
+  transaction.gasPrice = event.transaction.gasPrice
   transaction.block = event.block.number
   transaction.timestamp = event.block.timestamp
   transaction.hash = event.transaction.hash
@@ -151,7 +160,7 @@ export function handleDeposited(event: DepositedEvent): void {
   if (currentDepositData.tokenType === 2) {
     deposit.tokenType = 'ERC721'
   }
-  deposit.numberOfEntries = event.params.entriesCount
+  deposit.entriesCount = event.params.entriesCount
   deposit.indice = BigInt.fromI32(depositData.length - 1)
   deposit.claimed = false
   deposit.participant = participant.id
@@ -189,7 +198,7 @@ export function handleDepositsWithdrawn(event: DepositsWithdrawnEvent): void {
 
   for(let i = 0; i < event.params.depositIndices.length; i++) {
     const indice = event.params.depositIndices.at(i)
-    let deposit = Deposit.load(event.params.roundId.toString().concat((indice).toString()))
+    let deposit = Deposit.load(event.params.roundId.toString().concat(indice.toString()))
 
     if (deposit) {
       deposit.claimed = true;
@@ -433,6 +442,7 @@ export function handleRoundStatusUpdated(event: RoundStatusUpdatedEvent): void {
   round.winner = roundData.getWinner()
   round.drawnAt = roundData.getDrawnAt()
   round.status = event.params.status
+  round.lastStatusUpdate = event.block.timestamp
 
   roundLog.save()
   round.save();

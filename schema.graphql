@@ -21,7 +21,6 @@ type Deposit @entity {
   tokenAmount: BigInt! # uint256
   tokenId: BigInt! # uint256
   tokenType: TokenType!
-  numberOfEntries: BigInt!
   indice: BigInt!
   claimed: Boolean!
   participant: Participant!
@@ -34,7 +33,7 @@ type Transaction @entity(immutable: true) {
   hash: Bytes!
   round: Round!
   depositor: Bytes!
-  deposits: [Deposit!]!
+  deposits: [Deposit!]! @derivedFrom(field: "transaction")
   totalNumberOfEntries: BigInt!
   gasLimit: BigInt!
   gasPrice: BigInt!
@@ -48,7 +47,7 @@ type Round @entity {
   status: Int! # uint8
   cutoffTime: BigInt!
   lastStatusUpdate: BigInt
-  statusLog: [RoundStatusLog!]!
+  statusLog: [RoundStatusLog!]! @derivedFrom(field: "round")
   maximumNumberOfDeposits: BigInt!
   maximumNumberOfParticipants: BigInt!
   valuePerEntry: BigInt! #uint256
@@ -61,7 +60,7 @@ type Round @entity {
   protocolFeeBp: Int! # uint16
   protocolFeeOwed: BigInt!
   deposits: [Deposit!]! @derivedFrom(field: "round")
-  transactions: [Transaction!]!
+  transactions: [Transaction!]! @derivedFrom(field: "round")
 }
 
 type RoundStatusLog @entity(immutable: true) {
