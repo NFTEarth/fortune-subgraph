@@ -1,4 +1,6 @@
 specVersion: 0.0.5
+description: NFTEarth Fortune game indexer
+repository: https://github.com/NFTEarth/fortune-subgraph
 schema:
   file: ./schema.graphql
 dataSources:

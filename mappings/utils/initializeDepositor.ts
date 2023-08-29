@@ -12,6 +12,7 @@ const initializeDepositor = (address: Address) : Depositor => {
     depositor.biggestROI =  BigInt.zero()
     depositor.totalRoundsWon = BigInt.zero()
     depositor.totalRoundsPlayed = BigInt.zero()
+    depositor.lastRoundPlayed = BigInt.zero()
   }
 
   return depositor
