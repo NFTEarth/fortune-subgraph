@@ -14,14 +14,15 @@ dataSources:
       apiVersion: 0.0.7
       language: wasm/assemblyscript
       entities:
+        - Fortune
         - Entry
         - Deposit
         - Round
-        - Deposited
-        - DepositsWithdrawn
-        - PrizesClaimed
-        - RandomnessRequested
-        - RoundStatusUpdated
+        - Participant
+        - Depositor
+        - Transaction
+        - RoundStatusLog
+        - Currency
       abis:
         - name: Fortune
           file: ./abis/Fortune.json
@@ -36,4 +37,4 @@ dataSources:
           handler: handleRandomnessRequested
         - event: RoundStatusUpdated(uint256,uint8)
           handler: handleRoundStatusUpdated
-      file: ./src/fortune.ts
+      file: ./mappings/index.ts
