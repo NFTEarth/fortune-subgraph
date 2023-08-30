@@ -39,4 +39,6 @@ dataSources:
           handler: handleRandomnessRequested
         - event: RoundStatusUpdated(uint256,uint8)
           handler: handleRoundStatusUpdated
+        - event: CurrenciesStatusUpdated(address[],bool)
+          handler: handleCurrenciesStatusUpdated
       file: ./mappings/index.ts

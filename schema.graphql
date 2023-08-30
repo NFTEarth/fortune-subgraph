@@ -85,6 +85,7 @@ type RoundStatusLog @entity(immutable: true) {
 type Fortune @entity {
   id: ID!
   totalRounds: BigInt!
+  currentRound: Round
 }
 
 type Currency @entity {

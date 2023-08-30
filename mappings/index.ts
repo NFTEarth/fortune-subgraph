@@ -18,6 +18,7 @@ import fetchDeposits from "./utils/eth_calls/fetchDeposits";
 import { fetchRound } from "./utils/eth_calls/fetchRound";
 import initializeRound from "./utils/initializeRound";
 import initializeDepositor from "./utils/initializeDepositor";
+import initializeFortune from "./utils/initializeFortune";
 
 export function handleCurrenciesStatusUpdated(
   event: CurrenciesStatusUpdatedEvent
@@ -109,9 +110,6 @@ function filterDeposit (depositIndices: BigInt[], index: number): boolean {
 }
 
 export function handleDepositsWithdrawn(event: DepositsWithdrawnEvent): void {
-  let round = initializeRound(event.params.roundId)
-  let roundData = fetchRound(event.params.roundId)
-
   for(let i = 0; i < event.params.depositIndices.length; i++) {
     const indice = event.params.depositIndices.at(i)
     let deposit = Deposit.load(event.params.roundId.toString().concat(indice.toString()))
@@ -119,13 +117,6 @@ export function handleDepositsWithdrawn(event: DepositsWithdrawnEvent): void {
     if (deposit) {
       deposit.claimed = true;
       deposit.save();
-
-      if (round) {
-        round.numberOfEntries = round.numberOfEntries.minus(deposit.entriesCount)
-        round.numberOfParticipants = roundData.getNumberOfParticipants()
-
-        round.save();
-      }
     }
   }
 }
@@ -158,21 +149,29 @@ export function handleRoundStatusUpdated(event: RoundStatusUpdatedEvent): void {
   roundLog.status = event.params.status
   roundLog.round = round.id
 
-  const winner = roundData.getWinner();
   round.status = event.params.status
-  round.winner = winner
-  round.drawnAt = roundData.getDrawnAt()
   round.protocolFeeOwed = roundData.getProtocolFeeOwed()
   round.lastStatusUpdate = event.block.timestamp
 
+  if (event.params.status === 1) {
+    const fortuneEntity = initializeFortune()
+    fortuneEntity.totalRounds = fortuneEntity.totalRounds.plus(BigInt.fromI32(1))
+    fortuneEntity.currentRound = event.params.roundId.toString()
+    fortuneEntity.save()
+  }
+
   if (event.params.status === 3) {
+    const winner = roundData.getWinner();
+    round.winner = winner
+    round.drawnAt = roundData.getDrawnAt()
+
     let depositor = initializeDepositor(winner)
     const currentEthWon = round.numberOfEntries.times(round.valuePerEntry)
     const deposits = round.deposits.load()
 
     let winnerEntry = BigInt.zero()
-    for (let i = 0; i < deposits.length - 1; i++) {
-      if (deposits[i].depositor === winner) {
+    for(let i = 0; i < deposits.length; i++) {
+      if (deposits[i].depositor.equals(winner)) {
         winnerEntry = winnerEntry.plus(deposits[i].entriesCount)
       }
     }
@@ -192,8 +191,8 @@ export function handleRoundStatusUpdated(event: RoundStatusUpdatedEvent): void {
     depositor.save();
   }
 
-  roundLog.save()
   round.save();
+  roundLog.save()
 }
 
 
